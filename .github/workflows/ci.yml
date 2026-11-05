@@ -6,11 +6,22 @@ on:
   pull_request:
 
 jobs:
-  build:
+  build-and-test:
     runs-on: ubuntu-latest
+    env:
+      REDIS_PASSWORD: ${{ secrets.REDIS_PASSWORD }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Build Docker image
-        run: docker build -t devops-app:${{ github.sha }} .
+      - name: Start app with Compose
+        run: docker compose up -d --build
+
+      - name: Smoke test
+        run: |
+          sleep 5
+          curl -f http://localhost:5003
+
+      - name: Show logs if something failed
+        if: failure()
+        run: docker compose logs
